@@ -1,5 +1,7 @@
 ﻿using NJsonSchema;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
 namespace JinCSharp.SourceGenerator.SchemaGenerators;
 
@@ -25,6 +27,11 @@ internal class SchemaTypeNameGenerator : DefaultTypeNameGenerator
         if (defaultTypeName.StartsWith(_rootTypeName))
         {
             return defaultTypeName;
+        }
+
+        if (schema.Parent is not null && schema.Parent is JsonSchemaProperty parentSchemaProperty && reservedTypeNames.Contains($"{_rootTypeName}{defaultTypeName}"))
+        {
+            return $"{_rootTypeName}{Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(parentSchemaProperty.Name)}{defaultTypeName}";
         }
 
         return $"{_rootTypeName}{defaultTypeName}";

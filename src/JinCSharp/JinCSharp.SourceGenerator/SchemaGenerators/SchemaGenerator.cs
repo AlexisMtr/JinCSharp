@@ -63,7 +63,7 @@ public class SchemaGenerator : IIncrementalGenerator
                 continue;
             }
 
-            var @namespace = symbol.ContainingNamespace.Name;
+            var @namespace = string.Join(".", symbol.ContainingNamespace.ConstituentNamespaces);
             var className = symbol.Name;
             var schemaSourceAttribute = symbol.GetAttributes().Single(e => e.AttributeClass is not null && e.AttributeClass.Name.Contains(SchemaSourceConstants.AttributeName));
             var schemaSourceUri = schemaSourceAttribute.ConstructorArguments.First().Value as string;
@@ -92,6 +92,8 @@ public class SchemaGenerator : IIncrementalGenerator
                 SchemaType = SchemaType.JsonSchema,
                 TypeNameGenerator = new SchemaTypeNameGenerator(className),
                 GenerateJsonMethods = true,
+                Namespace = string.IsNullOrWhiteSpace(parentClassName) ? @namespace : $"{@namespace}.{parentClassName}",
+                RequiredPropertiesMustBeDefined = true
             });
 
             _ = codeGenerator.GenerateFile();
@@ -104,7 +106,7 @@ public class SchemaGenerator : IIncrementalGenerator
                 {
                     context.AddSource(fileName, $$"""
                         namespace {{@namespace}};
-                        
+
                         {{type.Code}}
                         """);
                 }
@@ -112,10 +114,10 @@ public class SchemaGenerator : IIncrementalGenerator
                 {
                     context.AddSource(fileName, $$"""
                         namespace {{@namespace}};
-                        
+
                         public partial class {{parentClassName}}
                         {
-                            {{type.Code}}
+                            {{type.Code.Replace("\n", "\n\t")}}
                         }
                         """);
                 }
